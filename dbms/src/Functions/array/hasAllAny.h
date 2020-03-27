@@ -27,7 +27,7 @@ namespace ErrorCodes
 class FunctionArrayHasAllAny : public IFunction
 {
 public:
-    FunctionArrayHasAllAny(const Context & context_, bool all_, const char * name_)
+    FunctionArrayHasAllAny(const Context & context_, GatherUtils::ArrayHasKind all_, const char * name_)
         : context(context_), all(all_), name(name_) {}
 
     String getName() const override { return name; }
@@ -115,7 +115,7 @@ public:
 
 private:
     const Context & context;
-    bool all;
+    GatherUtils::ArrayHasKind all;
     const char * name;
 };
 
