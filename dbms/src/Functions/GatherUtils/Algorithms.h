@@ -395,20 +395,20 @@ void NO_INLINE conditional(SourceA && src_a, SourceB && src_b, Sink && sink, con
 
 
 template <
-    ArrayHasKind hasKind,
+    ArraySearchType search_type,
     typename FirstSliceType,
     typename SecondSliceType,
           bool (*isEqual)(const FirstSliceType &, const SecondSliceType &, size_t, size_t)>
 bool sliceHasImpl(const FirstSliceType & first, const SecondSliceType & second, const UInt8 * first_null_map, const UInt8 * second_null_map) noexcept
 {
-    if constexpr (hasKind == ArrayHasKind::SubSeq)
+    if constexpr (search_type == ArraySearchType::SubSeq)
         return sliceHasImplSubSeq<FirstSliceType, SecondSliceType, isEqual>(first, second, first_null_map, second_null_map);
     else
-        return sliceHasImplAnyAll<hasKind, FirstSliceType, SecondSliceType, isEqual>(first, second, first_null_map, second_null_map);
+        return sliceHasImplAnyAll<search_type, FirstSliceType, SecondSliceType, isEqual>(first, second, first_null_map, second_null_map);
 }
 
 template <
-    ArrayHasKind hasKind,
+    ArraySearchType search_type,
     typename FirstSliceType,
     typename SecondSliceType,
           bool (*isEqual)(const FirstSliceType &, const SecondSliceType &, size_t, size_t)>
@@ -432,13 +432,13 @@ bool sliceHasImplAnyAll(const FirstSliceType & first, const SecondSliceType & se
                 has = true;
         }
 
-        if (has && hasKind == ArrayHasKind::Any)
+        if (has && search_type == ArraySearchType::Any)
             return true;
 
-        if (!has && hasKind == ArrayHasKind::All)
+        if (!has && search_type == ArraySearchType::All)
             return false;
     }
-    return hasKind == ArrayHasKind::All;
+    return search_type == ArraySearchType::All;
 }
 /// Methods to check if first array has elements from second array, overloaded for various combinations of types.
 template < typename FirstSliceType,
@@ -449,10 +449,13 @@ bool sliceHasImplSubSeq(const FirstSliceType & first, const SecondSliceType & se
     const bool has_first_null_map = first_null_map != nullptr;
     const bool has_second_null_map = second_null_map != nullptr;
 
-    for (size_t i = 0; i < second.size; ++i)
+    if (second.size == 0) 
+        return true;
+
+    for (size_t i = 0; i < first.size; ++i)
     {
         bool has = false;
-        for (size_t j = 0; j < first.size; ++j)
+        for (size_t j = 0; j < second.size; ++j)
         {
             const bool is_first_null = has_first_null_map && first_null_map[j];
             const bool is_second_null = has_second_null_map && second_null_map[i];
@@ -460,7 +463,7 @@ bool sliceHasImplSubSeq(const FirstSliceType & first, const SecondSliceType & se
             if (is_first_null && is_second_null){
                 has = true;
             }
-            else if (!is_first_null && !is_second_null && i + j < second.size && isEqual(first, second, j, i + j)) {
+            else if (!is_first_null && !is_second_null && i + j < first.size && isEqual(first, second, j, i + j)) {
                 has = true;
             }
             else {
@@ -507,65 +510,65 @@ inline ALWAYS_INLINE bool sliceEqualElements(const GenericArraySlice & first, co
     return first.elements->compareAt(first_ind + first.begin, second_ind + second.begin, *second.elements, -1) == 0;
 }
 
-template <ArrayHasKind hasKind, typename T, typename U>
+template <ArraySearchType search_type, typename T, typename U>
 bool sliceHas(const NumericArraySlice<T> & first, const NumericArraySlice<U> & second)
 {
-    auto impl = sliceHasImpl<hasKind, NumericArraySlice<T>, NumericArraySlice<U>, sliceEqualElements<T, U>>;
+    auto impl = sliceHasImpl<search_type, NumericArraySlice<T>, NumericArraySlice<U>, sliceEqualElements<T, U>>;
     return impl(first, second, nullptr, nullptr);
 }
 
-template <ArrayHasKind hasKind>
+template <ArraySearchType search_type>
 bool sliceHas(const GenericArraySlice & first, const GenericArraySlice & second)
 {
     /// Generic arrays should have the same type in order to use column.compareAt(...)
     if (!first.elements->structureEquals(*second.elements))
         return false;
 
-    auto impl = sliceHasImpl<hasKind, GenericArraySlice, GenericArraySlice, sliceEqualElements>;
+    auto impl = sliceHasImpl<search_type, GenericArraySlice, GenericArraySlice, sliceEqualElements>;
     return impl(first, second, nullptr, nullptr);
 }
 
-template <ArrayHasKind hasKind, typename U>
+template <ArraySearchType search_type, typename U>
 bool sliceHas(const GenericArraySlice & /*first*/, const NumericArraySlice<U> & /*second*/)
 {
     return false;
 }
 
-template <ArrayHasKind hasKind, typename T>
+template <ArraySearchType search_type, typename T>
 bool sliceHas(const NumericArraySlice<T> & /*first*/, const GenericArraySlice & /*second*/)
 {
     return false;
 }
 
-template <ArrayHasKind hasKind, typename FirstArraySlice, typename SecondArraySlice>
+template <ArraySearchType search_type, typename FirstArraySlice, typename SecondArraySlice>
 bool sliceHas(const FirstArraySlice & first, NullableSlice<SecondArraySlice> & second)
 {
-    auto impl = sliceHasImpl<hasKind, FirstArraySlice, SecondArraySlice, sliceEqualElements<FirstArraySlice, SecondArraySlice>>;
+    auto impl = sliceHasImpl<search_type, FirstArraySlice, SecondArraySlice, sliceEqualElements<FirstArraySlice, SecondArraySlice>>;
     return impl(first, second, nullptr, second.null_map);
 }
 
-template <ArrayHasKind hasKind, typename FirstArraySlice, typename SecondArraySlice>
+template <ArraySearchType search_type, typename FirstArraySlice, typename SecondArraySlice>
 bool sliceHas(const NullableSlice<FirstArraySlice> & first, SecondArraySlice & second)
 {
-    auto impl = sliceHasImpl<hasKind, FirstArraySlice, SecondArraySlice, sliceEqualElements<FirstArraySlice, SecondArraySlice>>;
+    auto impl = sliceHasImpl<search_type, FirstArraySlice, SecondArraySlice, sliceEqualElements<FirstArraySlice, SecondArraySlice>>;
     return impl(first, second, first.null_map, nullptr);
 }
 
-template <ArrayHasKind hasKind, typename FirstArraySlice, typename SecondArraySlice>
+template <ArraySearchType search_type, typename FirstArraySlice, typename SecondArraySlice>
 bool sliceHas(const NullableSlice<FirstArraySlice> & first, NullableSlice<SecondArraySlice> & second)
 {
-    auto impl = sliceHasImpl<hasKind, FirstArraySlice, SecondArraySlice, sliceEqualElements<FirstArraySlice, SecondArraySlice>>;
+    auto impl = sliceHasImpl<search_type, FirstArraySlice, SecondArraySlice, sliceEqualElements<FirstArraySlice, SecondArraySlice>>;
     return impl(first, second, first.null_map, second.null_map);
 }
 
-template <ArrayHasKind hasKind, typename FirstSource, typename SecondSource>
+template <ArraySearchType search_type, typename FirstSource, typename SecondSource>
 void NO_INLINE arrayAllAny(FirstSource && first, SecondSource && second, ColumnUInt8 & result)
 {
     auto size = result.size();
     auto & data = result.getData();
     for (auto row : ext::range(0, size))
     {
-        data[row] = static_cast<UInt8>(sliceHas<hasKind>(first.getWhole(), second.getWhole()) ? 1 : 0);
+        data[row] = static_cast<UInt8>(sliceHas<search_type>(first.getWhole(), second.getWhole()) ? 1 : 0);
         first.next();
         second.next();
     }

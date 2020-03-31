@@ -27,8 +27,8 @@ namespace ErrorCodes
 class FunctionArrayHasAllAny : public IFunction
 {
 public:
-    FunctionArrayHasAllAny(const Context & context_, GatherUtils::ArrayHasKind all_, const char * name_)
-        : context(context_), all(all_), name(name_) {}
+    FunctionArrayHasAllAny(const Context & context_, GatherUtils::ArraySearchType search_type_, const char * name_)
+        : context(context_), search_type(search_type_), name(name_) {}
 
     String getName() const override { return name; }
 
@@ -106,7 +106,7 @@ public:
 
         auto result_column = ColumnUInt8::create(rows);
         auto result_column_ptr = typeid_cast<ColumnUInt8 *>(result_column.get());
-        GatherUtils::sliceHas(*sources[0], *sources[1], all, *result_column_ptr);
+        GatherUtils::sliceHas(*sources[0], *sources[1], search_type, *result_column_ptr);
 
         block.getByPosition(result).column = std::move(result_column);
     }
@@ -115,7 +115,7 @@ public:
 
 private:
     const Context & context;
-    GatherUtils::ArrayHasKind all;
+    GatherUtils::ArraySearchType search_type;
     const char * name;
 };
 

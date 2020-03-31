@@ -11,7 +11,7 @@ class FunctionArrayHasAny : public FunctionArrayHasAllAny
 public:
     static constexpr auto name = "hasAny";
     static FunctionPtr create(const Context & context) { return std::make_shared<FunctionArrayHasAny>(context); }
-    explicit FunctionArrayHasAny(const Context & context_) : FunctionArrayHasAllAny(context_, GatherUtils::ArrayHasKind::Any, name) {}
+    explicit FunctionArrayHasAny(const Context & context_) : FunctionArrayHasAllAny(context_, GatherUtils::ArraySearchType::Any, name) {}
 };
 
 void registerFunctionHasAny(FunctionFactory & factory)

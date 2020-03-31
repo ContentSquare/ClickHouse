@@ -8,17 +8,17 @@ namespace DB::GatherUtils
 struct ArrayHasSelectArraySourcePair : public ArraySourcePairSelector<ArrayHasSelectArraySourcePair>
 {
     template <typename FirstSource, typename SecondSource>
-    static void selectSourcePair(FirstSource && first, SecondSource && second, ArrayHasKind & kind, ColumnUInt8 & result)
+    static void selectSourcePair(FirstSource && first, SecondSource && second, ArraySearchType & search_type, ColumnUInt8 & result)
     {
-        switch (kind){
-            case ArrayHasKind::All:
-                arrayAllAny<ArrayHasKind::All>(first, second, result);
+        switch (search_type){
+            case ArraySearchType::All:
+                arrayAllAny<ArraySearchType::All>(first, second, result);
                 break;
-            case ArrayHasKind::Any:
-                arrayAllAny<ArrayHasKind::Any>(first, second, result);
+            case ArraySearchType::Any:
+                arrayAllAny<ArraySearchType::Any>(first, second, result);
                 break;
-            case ArrayHasKind::SubSeq:
-                arrayAllAny<ArrayHasKind::SubSeq>(first, second, result);
+            case ArraySearchType::SubSeq:
+                arrayAllAny<ArraySearchType::SubSeq>(first, second, result);
                 break;
 
         }
@@ -26,9 +26,9 @@ struct ArrayHasSelectArraySourcePair : public ArraySourcePairSelector<ArrayHasSe
 };
 
 
-void sliceHas(IArraySource & first, IArraySource & second, ArrayHasKind & kind, ColumnUInt8 & result)
+void sliceHas(IArraySource & first, IArraySource & second, ArraySearchType & search_type, ColumnUInt8 & result)
 {
-    ArrayHasSelectArraySourcePair::select(first, second, kind, result);
+    ArrayHasSelectArraySourcePair::select(first, second, search_type, result);
 }
 
 }

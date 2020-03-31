@@ -171,6 +171,47 @@ hasAny(array1, array2)
 
 `SELECT hasAll([[1, 2], [3, 4]], [[1, 2], [1, 2]])` returns `1`.
 
+## hasSubSeq {#hassubseq}
+
+Checks whether one array is a subset of another.
+
+``` sql
+hasAll(sequence, subsequence)
+```
+
+**Parameters**
+
+-   `sequence` – Array of any type with a set of elements.
+-   `subsequence` – Array of any type with elements that should be tested to be a subsequence of `sequence`.
+
+**Return values**
+
+-   `1`, if `sequence` contains `subsequence`.
+-   `0`, otherwise.
+
+**Peculiar properties**
+
+-   An empty array is a subsequence of any array.
+-   `Null` processed as a value.
+-   Order of values in both of arrays does matter.
+
+**Examples**
+
+`SELECT hasAll([], [])` returns 1.
+
+`SELECT hasAll([1, Null], [Null])` returns 1.
+
+`SELECT hasAll([1.0, 2, 3, 4], [1, 3])` returns 0.
+
+`SELECT hasAll(['a', 'b'], ['a'])` returns 1.
+
+`SELECT hasAll(['a', 'b' , 'c'], ['a', 'b'])` returns 1.
+
+`SELECT hasAll(['a', 'b' , 'c'], ['a', 'c'])` returns 0.
+
+`SELECT hasAll([[1, 2], [3, 4], [5, 6]], [[1, 2], [3, 4]])` returns 1.
+
+
 ## indexOf(arr, x) {#indexofarr-x}
 
 Returns the index of the first ‘x’ element (starting from 1) if it is in the array, or 0 if it is not.

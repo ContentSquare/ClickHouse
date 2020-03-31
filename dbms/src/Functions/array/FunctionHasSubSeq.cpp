@@ -11,7 +11,7 @@ class FunctionArrayHasSubSeq : public FunctionArrayHasAllAny
 public:
     static constexpr auto name = "hasSubSeq";
     static FunctionPtr create(const Context & context) { return std::make_shared<FunctionArrayHasSubSeq>(context); }
-    explicit FunctionArrayHasSubSeq(const Context & context_) : FunctionArrayHasAllAny(context_, GatherUtils::ArrayHasKind::SubSeq, name) {}
+    explicit FunctionArrayHasSubSeq(const Context & context_) : FunctionArrayHasAllAny(context_, GatherUtils::ArraySearchType::SubSeq, name) {}
 };
 
 void registerFunctionHasSubSeq(FunctionFactory & factory)
