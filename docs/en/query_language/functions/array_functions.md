@@ -176,7 +176,7 @@ hasAny(array1, array2)
 Checks whether one array is a subset of another.
 
 ``` sql
-hasAll(sequence, subsequence)
+hasSubSeq(sequence, subsequence)
 ```
 
 **Parameters**
