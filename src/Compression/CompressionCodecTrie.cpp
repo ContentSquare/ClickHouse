@@ -13,7 +13,6 @@ UInt32 CompressionCodecTrie::doCompressData(const char * source, UInt32 source_s
 {
     //todo this will change once radix tree is integrated
     memcpy(dest, source, source_size);
-    std::vector<const char> vectorised(source, source + source_size);
     ReadBufferFromMemory istr(source, source_size);
     std::vector<String> keys;
 
@@ -57,15 +56,11 @@ uint8_t CompressionCodecTrie::getMethodByte() const
 }
 void CompressionCodecTrie::deserializeKeysFromBlockString(ReadBuffer & istr, CompressionCodecTrie::KeysInBlock & keysInBlock) const
 {
-    UInt64 size;
-    String s = std::string{};
     while (!istr.eof())
     {
-        s.clear();
-        readVarUInt(size, istr);
-        s.resize(size);
-        istr.readStrict(s.data(), size);
-        keysInBlock.push_back(s);
+        Field field_rows;
+        data_type->deserializeBinary(field_rows, istr);
+        keysInBlock.push_back(field_rows.get<String>());
     }
 }
 /**
