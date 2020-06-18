@@ -6,29 +6,62 @@
 #include <DataTypes/DataTypeArray.h>
 #include <IO/ReadBufferFromString.h>
 #include <IO/WriteBufferFromString.h>
+#include <IO/WriteHelpers.h>
 #include <Common/hex.h>
 
 namespace DB
 {
 UInt32 CompressionCodecTrieArray::doCompressData(const char * source, UInt32 source_size, char * dest) const
 {
-    //todo this will change once radix tree is integrated
-    memcpy(dest, source, source_size);
+    // beware all of this code here is copy paste from CompressionCodecTrieString
+    // sorry for that xD
     ReadBufferFromMemory istr(source, source_size);
-    KeysInAllArraysBlockWithSize allArrays;
 
     std::vector<String> keys;
     this->deserializeKeysFromBlockString(istr,keys);
-//    this->deserializeKeysFromBlockDataTypeArray(istr, allArrays);
-//    printFoundArrays(allArrays);
     LOG_DEBUG(log, std::string("Keys in array:") );
     printFoundKeys(keys);
-    return source_size;
+
+    auto row_number = 0;
+    Trie trie;
+    for (const auto & key : keys)
+    {
+        trie.insert(key, row_number++);
+    }
+
+    auto radix_tree = trie.createRadixTree();
+    auto serialized_radix_tree = serde_ptr->serialize(radix_tree);
+    auto serialized_radix_size = serialized_radix_tree.size();
+
+    LOG_DEBUG(log, std::string("Number of nodes of radix after compressing array: ") + std::to_string(radix_tree.countNodes()));
+    LOG_DEBUG(log, std::string("Number of rows after compressing array: ") + std::to_string(radix_tree.countRows()));
+    memcpy(dest, serialized_radix_tree.data(), serialized_radix_size);
+    return serialized_radix_size;
+//    return source_size;
 }
-void CompressionCodecTrieArray::doDecompressData(const char * source, UInt32 /*source_size*/, char * dest, UInt32 uncompressed_size) const
+void CompressionCodecTrieArray::doDecompressData(const char * source, UInt32 source_size, char * dest, UInt32 uncompressed_size) const
 {
-    memcpy(dest, source, uncompressed_size);
+    // todo this gotta be improved
+    auto raw_data = String(source, source_size);
+
+    auto radix_tree = serde_ptr->deserialize(raw_data);
+    std::vector<String> lines;
+    radix_tree.generateLines(lines);
+
+    LOG_DEBUG(log, std::string("Number of nodes of radix after decompressing array: ") + std::to_string(radix_tree.countNodes()));
+    LOG_DEBUG(log, std::string("Number of rows after decompressing array: ") + std::to_string(radix_tree.countRows()));
+
+    // we have to encode vector of found lines into buffer of characters
+    WriteBuffer writeBuffer(&dest[0], uncompressed_size);
+
+    for (const auto & line : lines)
+    {
+        auto size = static_cast<UInt64>(line.size());
+        writeVarUInt(size, writeBuffer);
+        writeString(line.data(), writeBuffer);
+    }
 }
+
 String CompressionCodecTrieArray::getCodecDesc() const
 {
     return "TrieArray";

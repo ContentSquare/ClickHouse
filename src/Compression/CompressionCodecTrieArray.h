@@ -12,7 +12,8 @@ namespace DB
 class CompressionCodecTrieArray : public CompressionCodecTrieString
 {
 public:
-    CompressionCodecTrieArray() : log(&Poco::Logger::get("CompressionCodecTrieArray")) { }
+    CompressionCodecTrieArray() : log(&Poco::Logger::get("CompressionCodecTrieArray"))
+    { }
 
     uint8_t getMethodByte() const override;
 

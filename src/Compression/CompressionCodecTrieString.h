@@ -14,7 +14,7 @@ static int RLE_ACTIVATION_FLAG = 0;
 class CompressionCodecTrieString : public ICompressionCodec
 {
 public:
-    CompressionCodecTrieString() : log(&Poco::Logger::get("CompressionCodecTrieString")), serde_ptr(std::make_unique<Serde>()) { }
+    CompressionCodecTrieString() : serde_ptr(std::make_unique<Serde>()), log(&Poco::Logger::get("CompressionCodecTrieString")) { }
 
     uint8_t getMethodByte() const override;
 
@@ -107,9 +107,9 @@ protected:
         static std::pair<IntToString, int> decodeDictionary(String serializedObj);
     };
 
+    std::unique_ptr<Serde> serde_ptr;
 private:
     Poco::Logger * log;
-    std::unique_ptr<Serde> serde_ptr;
 };
 
 class CompressionCodecFactory;
