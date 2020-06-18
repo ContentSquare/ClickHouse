@@ -1,16 +1,16 @@
+#include <Compression/CompressionCodecLZ4.h>
+#include <Compression/CompressionCodecMultiple.h>
 #include <Compression/CompressionFactory.h>
-#include <Parsers/parseQuery.h>
-#include <Parsers/ParserCreateQuery.h>
+#include <IO/ReadBuffer.h>
+#include <IO/WriteHelpers.h>
 #include <Parsers/ASTFunction.h>
 #include <Parsers/ASTIdentifier.h>
 #include <Parsers/ASTLiteral.h>
-#include <Common/typeid_cast.h>
-#include <Poco/String.h>
-#include <IO/ReadBuffer.h>
+#include <Parsers/ParserCreateQuery.h>
+#include <Parsers/parseQuery.h>
 #include <Parsers/queryToString.h>
-#include <Compression/CompressionCodecMultiple.h>
-#include <Compression/CompressionCodecLZ4.h>
-#include <IO/WriteHelpers.h>
+#include <Poco/String.h>
+#include <Common/typeid_cast.h>
 
 
 namespace DB
@@ -138,7 +138,8 @@ void registerCodecDelta(CompressionCodecFactory & factory);
 void registerCodecT64(CompressionCodecFactory & factory);
 void registerCodecDoubleDelta(CompressionCodecFactory & factory);
 void registerCodecGorilla(CompressionCodecFactory & factory);
-void registerCodecTrie(CompressionCodecFactory & factory);
+void registerCodecTrieString(CompressionCodecFactory & factory);
+void registerCodecTrieArray(CompressionCodecFactory & factory);
 
 CompressionCodecFactory::CompressionCodecFactory()
 {
@@ -152,7 +153,8 @@ CompressionCodecFactory::CompressionCodecFactory()
     registerCodecT64(*this);
     registerCodecDoubleDelta(*this);
     registerCodecGorilla(*this);
-    registerCodecTrie(*this);
+    registerCodecTrieArray(*this);
+    registerCodecTrieString(*this);
 }
 
 CompressionCodecFactory & CompressionCodecFactory::instance()
