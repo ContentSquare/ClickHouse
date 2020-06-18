@@ -4,6 +4,7 @@
 #include <Core/Field.h>
 #include <IO/ReadBufferFromString.h>
 #include <IO/WriteBufferFromString.h>
+#include <IO/WriteHelpers.h>
 #include <Common/hex.h>
 
 namespace DB
@@ -38,14 +39,21 @@ void CompressionCodecTrieString::doDecompressData(const char * source, UInt32 so
     auto raw_data = String(source, source_size);
 
     auto radix_tree = serde_ptr->deserialize(raw_data);
-    std::vector<String> lines(dest[0], dest + uncompressed_size);
+    std::vector<String> lines;
     radix_tree.generateLines(lines);
 
     LOG_DEBUG(log, std::string("Number of nodes of radix after decompressing: ") + std::to_string(radix_tree.countNodes()));
     LOG_DEBUG(log, std::string("Number of rows after decompressing: ") + std::to_string(radix_tree.countRows()));
 
-    // todo investigate the fact that vector is not trivially copyable
-//    memcpy(dest, lines.data(), uncompressed_size);
+    // we have to encode vector of found lines into buffer of characters
+    WriteBuffer writeBuffer(&dest[0], uncompressed_size);
+
+    for (const auto & line : lines)
+    {
+        auto size = static_cast<UInt64>(line.size());
+        writeVarUInt(size, writeBuffer);
+        writeString(line.data(), writeBuffer);
+    }
 }
 
 String CompressionCodecTrieString::getCodecDesc() const
@@ -95,7 +103,6 @@ static bool isPrefix(std::string prefix, std::string toCheck)
 
 bool CompressionCodecTrieString::RadixTrie::radixSearch(const String & key)
 {
-
     bool result = false;
     RadixTrie * curr = this;
     for (RadixTrie & child : curr->children)
