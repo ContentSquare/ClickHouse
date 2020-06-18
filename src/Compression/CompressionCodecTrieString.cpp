@@ -356,9 +356,6 @@ int CompressionCodecTrieString::Serde::intGetNbBytesPerInteger(Int64 maxValue)
 // it only works for integer < 2^30
 void CompressionCodecTrieString::Serde::serializeIntDynamically(unsigned int i, std::string & serializedObj)
 {
-    CharInteger id;
-    id.integer = i;
-
     if (i >= static_cast<unsigned int>(2 << 30))
     {
         std::cout << "the given integer is above 2^30";

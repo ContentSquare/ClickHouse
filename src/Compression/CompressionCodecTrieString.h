@@ -9,7 +9,7 @@
 
 namespace DB
 {
-static int RLE_ACTIVATION_FLAG = 0;
+const int RLE_ACTIVATION_FLAG = 0;
 
 class CompressionCodecTrieString : public ICompressionCodec
 {
